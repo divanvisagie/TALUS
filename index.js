@@ -12,7 +12,7 @@ async function main() {
 
     app.use(bodyParser.json())
 
-    app.post('/led', (req, res) => {
+    app.post('/api/led', (req, res) => {
         const { on } = req.body
         if (on) {
             components.led.on()
@@ -23,7 +23,8 @@ async function main() {
         }
     })
 
-    app.post('/drive/motor', (req, res) => {
+    app.post('/api/drive/motor', (req, res) => {
+        console.log(req.body)
         let { speed, motor } = req.body
         const motorDriver = components[motor]
 
@@ -38,7 +39,7 @@ async function main() {
         })
     })
 
-    app.post('/drive/path', (req, res) => {
+    app.post('/api/drive/path', (req, res) => {
         const { commands } = req.body
         components.path(commands)
         res.send({
@@ -46,7 +47,7 @@ async function main() {
         })
     })
 
-    app.post('/drive/halt', (req, res) => {
+    app.post('/api/drive/halt', (req, res) => {
         components.left.stop()
         components.right.stop()
         res.send({

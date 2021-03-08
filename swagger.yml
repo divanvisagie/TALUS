@@ -5,7 +5,7 @@ info:
 servers:
   - url: http://localhost:8080/
 paths:
-  /led:
+  /api/led:
     post:
       tags:
         - 'Led'
@@ -20,7 +20,7 @@ paths:
       responses:
         '200':
           description: OK
-  /drive/halt:
+  /api/drive/halt:
     post:
       tags:
         - 'Drive'
@@ -30,7 +30,7 @@ paths:
         '200':
           description: OK
 
-  /drive/motor:
+  /api/drive/motor:
     post:
       tags:
         - 'Drive'
@@ -45,7 +45,7 @@ paths:
         '200':
           description: OK
 
-  /drive/path:
+  /api/drive/path:
     post:
       tags:
         - 'Routes'
