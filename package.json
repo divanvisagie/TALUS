@@ -1,0 +1,22 @@
+{
+  "name": "TALUS",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:divanvisagie/TALUS.git",
+  "author": "Divan visagie <me@dvisagie.com>",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nodemon",
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@types/johnny-five": "^1.3.0",
+    "@types/ramda": "^0.27.38",
+    "express": "^4.17.1",
+    "johnny-five": "^2.0.0",
+    "nodemon": "^2.0.7",
+    "ramda": "^0.27.1",
+    "serialport": "^9.0.7",
+    "xbee-api": "^0.6.0"
+  }
+}
