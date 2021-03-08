@@ -1,0 +1,91 @@
+openapi: '3.0.2'
+info:
+  title: TALUS API
+  version: '1.0'
+servers:
+  - url: http://localhost:8080/
+paths:
+  /led:
+    post:
+      tags:
+        - 'Led'
+      summary: Set the on status of the LED
+      operationId: updateLedStatus
+      requestBody:
+        description: Set the on/off status of the LED on pin 13
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LedInstruction'
+      responses:
+        '200':
+          description: OK
+  /drive/halt:
+    post:
+      tags:
+        - 'Drive'
+      summary: Stops all motors immediately
+      operationId: haltMotors
+      responses:
+        '200':
+          description: OK
+
+  /drive/motor:
+    post:
+      tags:
+        - 'Drive'
+      summary: Drives specified motor
+      requestBody:
+        description: Motor instruction
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MotorInstruction'
+      responses:
+        '200':
+          description: OK
+
+  /drive/path:
+    post:
+      tags:
+        - 'Routes'
+      summary: Send a path to the robot
+      operationId: sendPath
+      requestBody:
+        description: Set of instructions
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Path'
+      responses:
+        '200':
+          description: OK
+
+components:
+  schemas:
+    MotorInstruction:
+      type: object
+      properties:
+        speed:
+          type: integer
+          format: int32
+          default: 130
+        motor:
+          type: string
+          default: 'left'
+
+    LedInstruction:
+      type: object
+      properties:
+        on:
+          type: boolean
+          default: false
+    Path:
+      type: object
+      properties:
+        commands:
+          type: array
+          items:
+            type: array
+            items:
+              type: string

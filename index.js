@@ -1,126 +1,62 @@
-const five = require('johnny-five')
-const SerialPort = require('serialport')
+const express = require('express')
+const bodyParser = require('body-parser')
+const { createComponents } = require('./src/arduino')
 
-const { map } = require('ramda')
+const app = express()
 
-const xbee_api = require('xbee-api')
-let atSpeed = 100
-const xbeeAPI = new xbee_api.XBeeAPI({
-    api_mode: 1
-});
+const PORT = 8080
 
-xbeeAPI.on("frame_object", function (frame) {
-    console.log("OBJ> " + util.inspect(frame))
-})
+async function main() {
 
-function noop() { }
+    components = await createComponents()
 
-const board = new five.Board({
-    port: new SerialPort("/dev/tty.usbserial-DA00SPFW", {
-        baudRate: 57600,
-        parser: xbeeAPI.rawParser()
-    })
-})
+    app.use(bodyParser.json())
 
-const degreesToTime = (degrees) => {
-    return degrees * (atSpeed / 7)
-}
-
-
-const turn = (motor, degrees) => {
-    return new Promise((resolve, reject) => {
-        if (degrees > 0) {
-            motor.rev(atSpeed)
-        }
-        else {
-            console.log('reverse')
-            degrees = degrees * -1
-            motor.fwd(atSpeed)
-        }
-
-        const time = degreesToTime(degrees)
-
-        setTimeout(() => {
-            motor.stop()
-            resolve()
-        }, time)
-    })
-}
-
-const createPathFollower = async (leftMotor, rightMotor, led) => {
-
-    const execute = async (command) => {
-        const [instruction, value] = command
-        const commandPallette = {
-            'left': async (v) => {
-                return await Promise.all([
-                    turn(rightMotor, v),
-                    turn(leftMotor, v * -1)
-                ])
-            },
-            'right': async (v) => {
-                return await Promise.all([
-                    turn(rightMotor, v * -1),
-                    turn(leftMotor, v)
-                ])
-            },
-            'drive': async (v) => {
-
-                return await Promise.all([
-                    turn(rightMotor, v),
-                    turn(leftMotor, v)
-                ])
-            },
-            'wait': (v) => {
-                return new Promise((resolve, reject) => {
-                    setTimeout(() => {
-                        resolve()
-                    }, v)
-                })
-            },
-            'led': (v) => {
-                return new Promise((resolve) => {
-                    if (v) led.on()
-                    else led.off()
-                    resolve()
-                })
-            }
-        }
-        if (commandPallette[instruction]) {
-            return await commandPallette[instruction](value)
+    app.post('/led', (req, res) => {
+        const { on } = req.body
+        if (on) {
+            components.led.on()
+            res.send({ ledStatus: 'on' })
         } else {
-            throw Error('command not found')
+            components.led.off()
+            res.send({ ledStatus: 'off' })
         }
-    }
+    })
 
-    return async (commands) => {
+    app.post('/drive/motor', (req, res) => {
+        let { speed, motor } = req.body
+        const motorDriver = components[motor]
 
-        for (const command of commands) {
-            await execute(command)
+        if (speed < 0) {
+            motorDriver.fwd(speed * -1)
+        } else {
+            motorDriver.rev(speed)
         }
-    }
+
+        res.send({
+            message: `Driving ${motor} motor at ${speed}`
+        })
+    })
+
+    app.post('/drive/path', (req, res) => {
+        const { commands } = req.body
+        components.path(commands)
+        res.send({
+            message: 'path accepted'
+        })
+    })
+
+    app.post('/drive/halt', (req, res) => {
+        components.left.stop()
+        components.right.stop()
+        res.send({
+            message: 'stop command issued'
+        })
+    })
+
+    app.listen(PORT, () => {
+        console.log(`Express server listening on port ${PORT}`)
+    })
 }
 
-board.on('ready', async () => {
-    const led = new five.Led({ pin: 13 })
-    const leftMotor = new five.Motor([10, 8])
-    const rightMotor = new five.Motor([9, 7])
-    const path = await createPathFollower(leftMotor, rightMotor, led)
-    board.repl.inject({
-        left: leftMotor,
-        right: rightMotor,
-        turn,
-        led,
-        speed: (spd) => atSpeed = spd,
-        path
-    });
-
-    path([
-        ['drive', 120],
-        ['left', 90],
-    ])
-
-})
-
-// path([['led',true],['wait',1000],['led',false]])
-//  path([['left',100],['drive',200]])
+main()
